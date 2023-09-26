@@ -1,3 +1,8 @@
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.TreeMap;
+
 class HashMap{
     class Entity{
         int key; // Key -> HashCode() - > Index
@@ -74,45 +79,97 @@ class BinaryTree{
         int value;
         Node left;
         Node right;
-        // color
+        boolean isRed = false;
+
+        public void print() {
+            print("", this, false);
+        }
+
+        public void print(String prefix, Node n, boolean isLeft) { // Добавила визуализацию дерева, для собственной же наглядности
+            if (n != null) {
+                System.out.println(prefix + (n.isRed ? "\u001B[31m" : "\u001B[30m") + (isLeft ? "|-- " : "\\-- ") + n.value);
+                prefix += "    ";
+                if (n.right != null && n.right.value != 0) {
+                    print(prefix, n.right, false);
+                }
+                if (n.left != null && n.left.value != 0) {
+                    print(prefix, n.left, true);
+                }
+            }
+        }
+    }
+
+    public void Rebalance(Node node, Node parent) {
+        if (node.right != null && node.right.isRed) { // Если красный правый ребенок - разворачиваем в сторону родителя
+            if (parent.value > node.value) { // по часовой
+                int tmp = parent.value;
+                parent.value = node.right.value;
+                insert(parent, tmp, false);
+            } else { // против часовой
+                int tmp = parent.value;
+                parent.value = node.value;
+                node.value = node.right.value;
+                insert(node, tmp, false);
+            }
+            node.right = new Node(); // Перемещенную ноду обнуляем
+        } 
+        // Если у красной ноды есть красный потомок - разворачиваем в сторону ноды
+        if (node.isRed && node.left != null && node.left.isRed) { // по часовой
+            int tmp = node.left.value;
+            node.right.value = node.value;
+            node.left = new Node();
+            node.value = tmp;
+        } else if (node.isRed && node.right != null && node.right.isRed) { // против часовой
+            int tmp = node.right.value;
+            node.left.value = node.value;
+            node.right = new Node();
+            node.value = tmp;
+        }
     }
 
     public boolean insert(int value){
-        if(root == null){
+        if (root == null){
             root = new Node();
             root.value = value;
             return true;
-        }else{
-            insert(root, value);
+        } else{
+            insert(root, value, true);
             //root = rebalance(root);
+            // Не поняла, что надо ребалансировать, когда у нас еще только корень есть?
         }
-        // root.color = BLACK
+        root.isRed = false;
+        return false;
     }
 
-    private boolean insert(Node node, int value){
-        if(node.value == value){
+    private boolean insert(Node node, int value, boolean isNew) { // isNew - чтобы не окрашивать ноды, перемещаемые в ходе ребалансировки
+        if (node.value == value) {
             return false;
-        }else{
-            if(node.value < value){
-                if(node.right != null){
-                    insert(node.right, value);
-                    // node.right = Rebalance(node.right);
-                }else{
+        } else {
+            System.out.println("node: " + node.value + ", value: " + value);
+            if (node.value < value) {
+                if (node.right != null && node.right.value != 0) {
+                    insert(node.right, value, isNew);
+                    //this.root.print("before rebalance", this.root, false);
+                    Rebalance(node.right, node);
+                    //this.root.print("after  rebalance", this.root, false);
+                } else {
                     node.right = new Node();
                     node.right.value = value;
-                    // node.color = RED
-                    return true;
+                    node.right.isRed = isNew ? true : false; // node.color = RED
                 }
-            }else{
-                if(node.left != null){
-                    return insert(node.left, value);
-                    // Rebalance();
-                }else{
+                return true;
+            } else {
+                if (node.left != null && node.left.value != 0) {
+                    insert(node.left, value, isNew);
+                    //this.root.print("before", this.root, false);
+                    Rebalance(node.left, node);
+                    //this.root.print("after", this.root, false);
+                } else {
                     node.left = new Node();
                     node.left.value = value;
-                    // node.color = RED
-                    return true;
+                    node.left.isRed = isNew ? true : false; // node.color = RED
                 }
+                return true;
             }
         }
     }
@@ -150,14 +207,21 @@ public class Main {
         tree.insert(5);
         tree.insert(3);
         tree.insert(4);
+        tree.insert(6);
         tree.insert(1);
         tree.insert(2);
         tree.insert(7);
         tree.insert(8);
-        tree.insert(6);
+        tree.insert(15);
+        tree.insert(120);
+        tree.insert(1500);
+        tree.insert(30);
+        tree.insert(40);
+        tree.insert(50);
 
-        System.out.println(tree.find(7));
-        System.out.println(tree.find(9));
-
+        // System.out.println(tree.find(7));
+        // System.out.println(tree.find(9));
+        tree.root.print(" ", tree.root, false);
     }
+
 }
